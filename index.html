@@ -80,7 +80,6 @@
         let shakeIntensity = 0;
         let shakeDecay = 0.9; 
 
-        // NEW: Input flag to prevent automatic shooting when holding down the key
         let isKeyALocked = false;
 
         const player = {
@@ -99,15 +98,13 @@
             }
             
             if (event.key === 'a' || event.key === 'A') {
-                // NEW: If the key is already being held down, block the action completely
                 if (isKeyALocked) return;
                 
                 handleSlash(); 
-                isKeyALocked = true; // NEW: Lock it down immediately until they release it
+                isKeyALocked = true; 
             }
         });
 
-        // NEW: Keyup event listener to unlock the trigger when they physically release the key
         window.addEventListener('keyup', function(event) {
             if (event.key === 'a' || event.key === 'A') {
                 isKeyALocked = false; 
@@ -204,7 +201,9 @@
                 y: y, 
                 angle: angle, 
                 speed: speed, 
-                radius: 12 
+                radius: 12,
+                // NEW: Pass a custom individual offset tracker for wave oscillations
+                waveSeed: Math.random() * 1000 
             });
         }
 
@@ -218,7 +217,7 @@
             frameCount = 0; 
             currentLevel = 1; 
             shakeIntensity = 0; 
-            isKeyALocked = false; // NEW: Reset the input lock state
+            isKeyALocked = false; 
         }
 
         function triggerShake(intensity) {
@@ -229,7 +228,6 @@
             frameCount++; 
 
             if (!gameOver) { 
-                // CHANGED: Saved your custom adjustment to score 50 point level tiers
                 if (score >= 50) {
                     currentLevel = 2;
                 }
@@ -296,8 +294,25 @@
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     let enemy = enemies[i];
                     
-                    enemy.x -= Math.cos(enemy.angle) * enemy.speed;
-                    enemy.y -= Math.sin(enemy.angle) * enemy.speed;
+                    // Base vector calculations driving toward the center point
+                    let baseMoveX = Math.cos(enemy.angle) * enemy.speed;
+                    let baseMoveY = Math.sin(enemy.angle) * enemy.speed;
+
+                    if (currentLevel === 2) {
+                        // NEW: Inject wave manipulation. Calculates a perpendicular sidestepping shift vector using Math.sin
+                        let waveFrequency = frameCount * 0.08 + enemy.waveSeed;
+                        let waveMagnitude = 1.8; // Distance sway multiplier
+                        
+                        let perpendicularAngle = enemy.angle + Math.PI / 2;
+                        let waveOffset = Math.sin(waveFrequency) * waveMagnitude;
+
+                        enemy.x -= baseMoveX + Math.cos(perpendicularAngle) * waveOffset;
+                        enemy.y -= baseMoveY + Math.sin(perpendicularAngle) * waveOffset;
+                    } else {
+                        // Level 1 standard linear logic
+                        enemy.x -= baseMoveX;
+                        enemy.y -= baseMoveY;
+                    }
 
                     let dx = enemy.x - player.x;
                     let dy = enemy.y - player.y;
@@ -331,7 +346,6 @@
 
             canvasContext.clearRect(0, 0, canvas.width, canvas.height); 
 
-            // CHANGED: Base visual color shifts scale relative to your new score milestone targets (50 points)
             const overdriveRatio = Math.min(1, score / 50);
             
             canvasContext.strokeStyle = 'rgba(255, 255, 255, 0.03)';
