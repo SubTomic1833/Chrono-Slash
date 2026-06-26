@@ -54,7 +54,3 @@ A modern web browser (Chrome, Firefox, Edge, Safari) with JavaScript enabled.
 * **Google Fonts** - *Plus Jakarta Sans* typeface integration.
 
 ---
-
-## 📝 License
-
-This project is open-source and free to use, modify, or iterate upon. Go ahead and build something awesome with it!
