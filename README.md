@@ -2,6 +2,8 @@
 
 A high-octane, minimalist cyberpunk arcade shooter built entirely in a single file using vanilla JavaScript and HTML5 Canvas. Defend your core, time your slashes, and survive the Overdrive.
 
+# TRY IT FOR YOURSELF : https://subtomic1833.github.io/Chrono-Slash/
+
 ---
 
 ## 🕹️ Live Demo & Gameplay
