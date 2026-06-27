@@ -12,7 +12,6 @@
             margin: 0;
             background: #060609; 
             color: #fff;
-            /* Added sans-serif weight matching fallbacks */
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             display: flex;
             flex-direction: column; 
@@ -69,7 +68,6 @@
         const canvasContext = canvas.getContext('2d');
 
         let score = 0; 
-        let gameOver = false; 
         let enemies = []; 
         let lasers = []; 
         let particles = []; 
@@ -84,6 +82,8 @@
         let isKeyOLocked = false; 
 
         let gameState = "START"; 
+        let gameOverTime = 0;             
+        const restartCooldown = 2500;     
 
         const player = {
             x: canvas.width / 2, 
@@ -100,15 +100,21 @@
                 return;
             }
 
-            if (gameOver) { 
-                resetGame(); 
+            // CHANGED FOR STEP 3: Check cooldown before resetting game state
+            if (gameState === "GAMEOVER") {
+                const elapsed = Date.now() - gameOverTime;
+                if (elapsed >= restartCooldown) {
+                    resetGame();
+                }
                 return; 
             }
             
             if (event.key === 'o' || event.key === 'O') {
                 if (isKeyOLocked) return;
                 
-                handleSlash(); 
+                if (gameState === "PLAYING") {
+                    handleSlash();
+                } 
                 isKeyOLocked = true; 
             }
         });
@@ -216,7 +222,6 @@
 
         function resetGame() {
             score = 0; 
-            gameOver = false; 
             enemies = []; 
             lasers = []; 
             particles = []; 
@@ -225,6 +230,7 @@
             currentLevel = 1; 
             shakeIntensity = 0; 
             isKeyOLocked = false; 
+            gameState = "PLAYING"; 
         }
 
         function triggerShake(intensity) {
@@ -232,7 +238,7 @@
         }
 
         function update() {
-            if (gameState === "PLAYING" && !gameOver) { 
+            if (gameState === "PLAYING") { 
                 frameCount++; 
 
                 if (score >= 50) {
@@ -323,7 +329,8 @@
                     let dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist <= player.radius) {
-                        gameOver = true; 
+                        gameState = "GAMEOVER";
+                        gameOverTime = Date.now();
                         triggerShake(22);
                     }
                 }
@@ -412,7 +419,6 @@
                 canvasContext.restore(); 
             }
 
-            // Forced strict canvas font declaration chains to match CSS fallbacks
             canvasContext.font = '800 13px "Plus Jakarta Sans", sans-serif';
             canvasContext.textAlign = 'center';
             for (let ft of floatingTexts) {
@@ -432,18 +438,48 @@
             const levelText = currentLevel === 1 ? 'LEVEL 01 // STANDARD' : 'LEVEL 02 // OVERDRIVE'; 
             canvasContext.fillText(levelText, canvas.width - 240, 45); 
 
-            if (gameOver) {
-                canvasContext.fillStyle = 'rgba(6, 6, 9, 0.85)'; 
+            // CHANGED FOR STEP 3: Beautiful dedicated GameOver screen with visual timer calculation
+            if (gameState === "GAMEOVER") {
+                canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
                 canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
                 
-                canvasContext.fillStyle = '#ff3366'; 
-                canvasContext.font = '800 28px "Plus Jakarta Sans", sans-serif'; 
                 canvasContext.textAlign = 'center'; 
-                canvasContext.fillText('SYSTEM OVERLOAD', canvas.width / 2, canvas.height / 2 - 10); 
                 
-                canvasContext.fillStyle = '#646473'; 
-                canvasContext.font = '600 14px "Plus Jakarta Sans", sans-serif'; 
-                canvasContext.fillText('PRESS ANY KEY TO REBOOT', canvas.width / 2, canvas.height / 2 + 30); 
+                canvasContext.fillStyle = '#ff3366'; 
+                canvasContext.font = '800 32px "Plus Jakarta Sans", sans-serif'; 
+                canvasContext.fillText('SYSTEM OVERLOAD // CRITICAL', canvas.width / 2, canvas.height / 2 - 80); 
+                
+                canvasContext.fillStyle = '#ffffff'; 
+                canvasContext.font = '600 16px "Plus Jakarta Sans", sans-serif'; 
+                canvasContext.fillText(`FINAL SECTOR RECORD: ${score.toString().padStart(3, '0')} NODES`, canvas.width / 2, canvas.height / 2 - 30); 
+
+                // Calculate ongoing lock time remaining
+                const timeElapsed = Date.now() - gameOverTime;
+                const timeRemaining = Math.max(0, restartCooldown - timeElapsed);
+
+                if (timeRemaining > 0) {
+                    // Lock active: Show loading bar and seconds countdown
+                    const secondsLeft = (timeRemaining / 1000).toFixed(1);
+                    
+                    canvasContext.fillStyle = '#646473';
+                    canvasContext.font = '600 14px "Plus Jakarta Sans", sans-serif'; 
+                    canvasContext.fillText(`RECALIBRATING CORE MATRIX... ${secondsLeft}s`, canvas.width / 2, canvas.height / 2 + 30); 
+
+                    // Minimal countdown tracking line
+                    const barWidth = 200;
+                    const progress = timeRemaining / restartCooldown;
+                    canvasContext.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                    canvasContext.fillRect(canvas.width / 2 - barWidth / 2, canvas.height / 2 + 50, barWidth, 4);
+                    
+                    canvasContext.fillStyle = '#ff3366';
+                    canvasContext.fillRect(canvas.width / 2 - barWidth / 2, canvas.height / 2 + 50, barWidth * progress, 4);
+                } else {
+                    // Lock released: Flashing action text ready to reboot
+                    canvasContext.fillStyle = '#00f2fe'; 
+                    canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif'; 
+                    canvasContext.fillText('PRESS "O" OR ANY KEY TO REBOOT ARCHITECTURE', canvas.width / 2, canvas.height / 2 + 35); 
+                }
+                
                 canvasContext.textAlign = 'left'; 
             }
 
