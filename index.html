@@ -58,7 +58,7 @@
 
     <div class="header-container">
         <h1>Chrono Slash</h1>
-        <p>Press the "A" KEY to slash when an enemy enters the circle</p> 
+        <p>Press the "O" KEY to slash when an enemy enters the circle</p> 
     </div>
     
     <canvas id="gameCanvas" width="1000" height="550"></canvas>
@@ -80,7 +80,9 @@
         let shakeIntensity = 0;
         let shakeDecay = 0.9; 
 
-        let isKeyALocked = false;
+        let isKeyOLocked = false; 
+
+        let gameState = "START"; 
 
         const player = {
             x: canvas.width / 2, 
@@ -92,22 +94,27 @@
         window.addEventListener('keydown', function(event) {
             event.preventDefault(); 
             
+            if (gameState === "START") {
+                gameState = "PLAYING";
+                return;
+            }
+
             if (gameOver) { 
                 resetGame(); 
                 return; 
             }
             
-            if (event.key === 'a' || event.key === 'A') {
-                if (isKeyALocked) return;
+            if (event.key === 'o' || event.key === 'O') {
+                if (isKeyOLocked) return;
                 
                 handleSlash(); 
-                isKeyALocked = true; 
+                isKeyOLocked = true; 
             }
         });
 
         window.addEventListener('keyup', function(event) {
-            if (event.key === 'a' || event.key === 'A') {
-                isKeyALocked = false; 
+            if (event.key === 'o' || event.key === 'O') {
+                isKeyOLocked = false; 
             }
         });
 
@@ -202,7 +209,6 @@
                 angle: angle, 
                 speed: speed, 
                 radius: 12,
-                // NEW: Pass a custom individual offset tracker for wave oscillations
                 waveSeed: Math.random() * 1000 
             });
         }
@@ -217,7 +223,7 @@
             frameCount = 0; 
             currentLevel = 1; 
             shakeIntensity = 0; 
-            isKeyALocked = false; 
+            isKeyOLocked = false; 
         }
 
         function triggerShake(intensity) {
@@ -225,9 +231,9 @@
         }
 
         function update() {
-            frameCount++; 
+            if (gameState === "PLAYING" && !gameOver) { 
+                frameCount++; 
 
-            if (!gameOver) { 
                 if (score >= 50) {
                     currentLevel = 2;
                 }
@@ -294,14 +300,12 @@
                 for (let i = enemies.length - 1; i >= 0; i--) {
                     let enemy = enemies[i];
                     
-                    // Base vector calculations driving toward the center point
                     let baseMoveX = Math.cos(enemy.angle) * enemy.speed;
                     let baseMoveY = Math.sin(enemy.angle) * enemy.speed;
 
                     if (currentLevel === 2) {
-                        // NEW: Inject wave manipulation. Calculates a perpendicular sidestepping shift vector using Math.sin
                         let waveFrequency = frameCount * 0.08 + enemy.waveSeed;
-                        let waveMagnitude = 1.8; // Distance sway multiplier
+                        let waveMagnitude = 1.8; 
                         
                         let perpendicularAngle = enemy.angle + Math.PI / 2;
                         let waveOffset = Math.sin(waveFrequency) * waveMagnitude;
@@ -309,7 +313,6 @@
                         enemy.x -= baseMoveX + Math.cos(perpendicularAngle) * waveOffset;
                         enemy.y -= baseMoveY + Math.sin(perpendicularAngle) * waveOffset;
                     } else {
-                        // Level 1 standard linear logic
                         enemy.x -= baseMoveX;
                         enemy.y -= baseMoveY;
                     }
@@ -440,6 +443,56 @@
                 canvasContext.font = '600 14px "Plus Jakarta Sans", sans-serif'; 
                 canvasContext.fillText('PRESS ANY KEY TO REBOOT', canvas.width / 2, canvas.height / 2 + 30); 
                 canvasContext.textAlign = 'left'; 
+            }
+
+            // INJECTED FOR STEP 3: Draw a terminal menu backdrop layer if game hasn't started yet
+            if (gameState === "START") {
+                canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
+                canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
+
+                canvasContext.textAlign = 'center';
+                
+                // Game Title Header
+                canvasContext.fillStyle = '#00f2fe';
+                canvasContext.font = '800 32px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('CHRONO SLASH // ARCHITECTURE', canvas.width / 2, canvas.height / 2 - 110);
+
+                // Subheader breakdown instructions
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '600 15px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('DEFEND THE CHRONO-CORE FROM THE INCOMING VECTOR NODES', canvas.width / 2, canvas.height / 2 - 60);
+
+                // Timing / Zone scoring references panel blocks
+                canvasContext.fillStyle = '#646473';
+                canvasContext.fillRect(canvas.width / 2 - 250, canvas.height / 2 - 30, 500, 110);
+
+                canvasContext.fillStyle = '#ffd700'; // Gold perfect
+                canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('PERFECT SECTOR (+2 PTS)', canvas.width / 2 - 120, canvas.height / 2 + 0);
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('• Outer Ring edge alignment', canvas.width / 2 + 80, canvas.height / 2 + 0);
+
+                canvasContext.fillStyle = '#00f2fe'; // Cyan good
+                canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('GOOD SECTOR (+1 PT)', canvas.width / 2 - 120, canvas.height / 2 + 25);
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('• Inside active weapon threshold', canvas.width / 2 + 80, canvas.height / 2 + 25);
+
+                canvasContext.fillStyle = '#ff3366'; // Crimson late
+                canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('LATE SECTOR (0 PTS)', canvas.width / 2 - 120, canvas.height / 2 + 50);
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('• Core adjacency warning zone', canvas.width / 2 + 80, canvas.height / 2 + 50);
+
+                // Launch directive instruction flashing callout
+                canvasContext.fillStyle = '#00f2fe';
+                canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('PRESS "O" OR ANY OTHER KEY TO INITIALIZE SYSTEMS', canvas.width / 2, canvas.height / 2 + 125);
+
+                canvasContext.textAlign = 'left';
             }
 
             canvasContext.restore(); 
