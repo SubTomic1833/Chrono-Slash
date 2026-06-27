@@ -6,13 +6,14 @@
     <title>Chrono Slash - One Key Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             background: #060609; 
             color: #fff;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; 
+            /* Added sans-serif weight matching fallbacks */
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             display: flex;
             flex-direction: column; 
             justify-content: center;
@@ -351,8 +352,8 @@
 
             const overdriveRatio = Math.min(1, score / 50);
             
-            canvasContext.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-            canvasContext.lineWidth = 1;
+            canvasContext.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            canvasContext.lineWidth = 1.5;
             canvasContext.beginPath();
             canvasContext.arc(player.x, player.y, 210, 0, Math.PI * 2);
             canvasContext.stroke();
@@ -361,8 +362,8 @@
             canvasContext.arc(player.x, player.y, 120, 0, Math.PI * 2);
             canvasContext.stroke();
 
-            canvasContext.strokeStyle = `rgba(${255 * overdriveRatio + 255 * (1 - overdriveRatio)}, ${51 * (1 - overdriveRatio)}, ${102 * (1 - overdriveRatio) + 51 * overdriveRatio}, 0.14)`; 
-            canvasContext.lineWidth = 1.5; 
+            canvasContext.strokeStyle = `rgba(${255 * overdriveRatio + 255 * (1 - overdriveRatio)}, ${51 * (1 - overdriveRatio)}, ${102 * (1 - overdriveRatio) + 51 * overdriveRatio}, 0.45)`; 
+            canvasContext.lineWidth = 2; 
             canvasContext.beginPath(); 
             canvasContext.arc(player.x, player.y, player.strikeZone, 0, Math.PI * 2); 
             canvasContext.stroke(); 
@@ -411,6 +412,7 @@
                 canvasContext.restore(); 
             }
 
+            // Forced strict canvas font declaration chains to match CSS fallbacks
             canvasContext.font = '800 13px "Plus Jakarta Sans", sans-serif';
             canvasContext.textAlign = 'center';
             for (let ft of floatingTexts) {
@@ -445,49 +447,44 @@
                 canvasContext.textAlign = 'left'; 
             }
 
-            // INJECTED FOR STEP 3: Draw a terminal menu backdrop layer if game hasn't started yet
             if (gameState === "START") {
                 canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
                 canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
 
                 canvasContext.textAlign = 'center';
                 
-                // Game Title Header
                 canvasContext.fillStyle = '#00f2fe';
                 canvasContext.font = '800 32px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('CHRONO SLASH // ARCHITECTURE', canvas.width / 2, canvas.height / 2 - 110);
 
-                // Subheader breakdown instructions
                 canvasContext.fillStyle = '#ffffff';
                 canvasContext.font = '600 15px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('DEFEND THE CHRONO-CORE FROM THE INCOMING VECTOR NODES', canvas.width / 2, canvas.height / 2 - 60);
 
-                // Timing / Zone scoring references panel blocks
                 canvasContext.fillStyle = '#646473';
                 canvasContext.fillRect(canvas.width / 2 - 250, canvas.height / 2 - 30, 500, 110);
 
-                canvasContext.fillStyle = '#ffd700'; // Gold perfect
+                canvasContext.fillStyle = '#ffd700'; 
                 canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('PERFECT SECTOR (+2 PTS)', canvas.width / 2 - 120, canvas.height / 2 + 0);
                 canvasContext.fillStyle = '#ffffff';
                 canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('• Outer Ring edge alignment', canvas.width / 2 + 80, canvas.height / 2 + 0);
 
-                canvasContext.fillStyle = '#00f2fe'; // Cyan good
+                canvasContext.fillStyle = '#00f2fe'; 
                 canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('GOOD SECTOR (+1 PT)', canvas.width / 2 - 120, canvas.height / 2 + 25);
                 canvasContext.fillStyle = '#ffffff';
                 canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('• Inside active weapon threshold', canvas.width / 2 + 80, canvas.height / 2 + 25);
 
-                canvasContext.fillStyle = '#ff3366'; // Crimson late
+                canvasContext.fillStyle = '#ff3366'; 
                 canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('LATE SECTOR (0 PTS)', canvas.width / 2 - 120, canvas.height / 2 + 50);
                 canvasContext.fillStyle = '#ffffff';
                 canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('• Core adjacency warning zone', canvas.width / 2 + 80, canvas.height / 2 + 50);
 
-                // Launch directive instruction flashing callout
                 canvasContext.fillStyle = '#00f2fe';
                 canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('PRESS "O" OR ANY OTHER KEY TO INITIALIZE SYSTEMS', canvas.width / 2, canvas.height / 2 + 125);
