@@ -2,18 +2,18 @@
 
 A high-octane, minimalist cyberpunk arcade rhythm-slasher built entirely in a single file using vanilla JavaScript and HTML5 Canvas. Defend your core, adapt to changing vector patterns, and survive the system overload.
 
-**⚡ TRY IT FOR YOURSELF:** [https://subtomic1833.github.io/Chrono-Slash/](https://subtomic1833.github.io/Chrono-Slash/)
+** TRY IT FOR YOURSELF:** https://subtomic1833.github.io/Chrono-Slash/
 
 ---
 
-## 🕹️ Live Demo & Gameplay
+## Live Demo & Gameplay
 
 * **Objective:** Prevent incoming enemy nodes from reaching your central blue core.
 * **Controls:** Press **SPACEBAR** or the **"O" KEY** to fire omnidirectional lock-on lasers at any enemies currently inside your active Strike Zone.
 
 ---
 
-## 🎯 Core Mechanics & Features
+## Core Mechanics & Features
 
 ### 1. Advanced Enemy Archetype Matrix
 The defense matrix must adapt to three distinct structural threat variants, each introducing unique movement logic and durability:
@@ -41,7 +41,7 @@ To preserve the competitive integrity of the high-score chase, the engine blocks
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 Because the entire game engine, styles, and rendering context are packaged in a single document, launching it locally takes seconds.
 
@@ -55,7 +55,7 @@ Because the entire game engine, styles, and rendering context are packaged in a 
 
 ---
 
-## 🛠️ Built With
+## Built With
 
 * **HTML5 Canvas** - High-performance 2D vector pixel rendering.
 * **Vanilla JavaScript** - Pure vector math, input tracking state machines, and frame loop scheduling via `requestAnimationFrame`.
