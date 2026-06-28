@@ -103,7 +103,7 @@
 
     <div class="header-container">
         <h1>Chrono Slash</h1>
-        <p>Press the "O" KEY to slash when an enemy enters the circle</p> 
+        <p>Press SPACEBAR or the "O" KEY to slash when an enemy enters the circle</p> 
     </div>
     
     <canvas id="gameCanvas" width="1000" height="550"></canvas>
@@ -142,7 +142,12 @@
 
         // listening for keyboard inputs
         window.addEventListener('keydown', function(event) {
-            event.preventDefault(); 
+            // Only intercept specific gameplay keys so browser shortcuts work perfectly
+            if (event.key === 'o' || event.key === 'O' || event.key === ' ') {
+                event.preventDefault(); 
+            } else {
+                return; 
+            }
             
             // start the game if we are on the menu
             if (gameState === "START") {
@@ -159,8 +164,8 @@
                 return; 
             }
             
-            // monitoring slash action trigger locks
-            if (event.key === 'o' || event.key === 'O') {
+            // monitoring slash action trigger locks (Accepts 'O' or Spacebar)
+            if (event.key === 'o' || event.key === 'O' || event.key === ' ') {
                 if (isKeyOLocked) return;
                 
                 if (gameState === "PLAYING") {
@@ -171,7 +176,7 @@
         });
 
         window.addEventListener('keyup', function(event) {
-            if (event.key === 'o' || event.key === 'O') {
+            if (event.key === 'o' || event.key === 'O' || event.key === ' ') {
                 isKeyOLocked = false; 
             }
         });
@@ -228,18 +233,18 @@
                     if (dist >= 210) { 
                         judgment = "PERFECT";
                         pointAward = 2; 
-                        particleColor = '#ffd700'; 
+                        particleColor = target.type === 'glitch' ? '#00f2fe' : '#ffd700'; 
                     } else if (dist >= 120) { 
                         judgment = "GOOD";
                         pointAward = 1; 
-                        particleColor = '#00f2fe'; 
+                        particleColor = target.type === 'quantum' ? '#b533ff' : '#00f2fe'; 
                     }
 
                     lasers.push({
                         x: player.x, 
                         y: player.y,
                         angle: targetAngle, 
-                        speed: 22, 
+                        speed: 24, 
                         length: 50, 
                         targetEnemyRef: target,
                         scorePayload: pointAward,
@@ -256,21 +261,47 @@
             }
         }
 
-        // logic to fetch new enemies around the core outskirts
+        // logic to fetch new enemies around the core outskirts with varied types
         function spawnEnemy() {
             const angle = Math.random() * Math.PI * 2;
             const spawnDistance = Math.max(canvas.width, canvas.height) * 0.7;
             const x = player.x + Math.cos(angle) * spawnDistance;
             const y = player.y + Math.sin(angle) * spawnDistance;
             
-            const speed = (1.5 + Math.random() * 1.5) * (1 + score * 0.04) * (currentLevel === 2 ? 1.25 : 1); 
+            // Randomly determine enemy type based on progression rules
+            let rand = Math.random();
+            let type = 'standard';
+            let radius = 12;
+            let hp = 1;
+            let typeColor = '#ff3366';
+            let speedModifier = 1.0;
+
+            if (score >= 15 && rand > 0.75) {
+                type = 'glitch';       // Fast and tiny
+                radius = 8;
+                typeColor = '#00f2fe';
+                speedModifier = 1.6;
+            } else if (score >= 30 && rand > 0.55) {
+                type = 'quantum';      // Tanky (requires 2 hits)
+                radius = 16;
+                hp = 2;
+                typeColor = '#b533ff';
+                speedModifier = 0.75;
+            }
+            
+            const baseSpeed = (1.5 + Math.random() * 1.5) * (1 + score * 0.03) * (currentLevel === 2 ? 1.2 : 1.0); 
 
             enemies.push({
                 x: x, 
-                y: y, 
-                angle: angle, 
-                speed: speed, 
-                radius: 12,
+                y: y,
+                angle: angle,
+                speed: baseSpeed * speedModifier, 
+                radius: radius,
+                type: type,
+                maxHp: hp,
+                hp: hp,
+                color: typeColor,
+                flashFrames: 0,
                 waveSeed: Math.random() * 1000 
             });
         }
@@ -304,7 +335,7 @@
 
                 let baseRate = spawnCircleInterval - score * 2;
                 if (currentLevel === 2) baseRate -= 20; 
-                let currentInterval = Math.max(20, Math.floor(baseRate)); 
+                let currentInterval = Math.max(25, Math.floor(baseRate)); 
 
                 if (frameCount % currentInterval === 0) {
                     spawnEnemy(); 
@@ -341,16 +372,26 @@
                     let dy = laser.y - laser.targetEnemyRef.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
 
-                    if (dist <= laser.targetEnemyRef.radius + 10){
+                    if (dist <= laser.targetEnemyRef.radius + 12){
                         let enemyIndex = enemies.indexOf(laser.targetEnemyRef);
                         if (enemyIndex !== -1) {
-                            createExplosion(laser.targetEnemyRef.x, laser.targetEnemyRef.y, laser.effectColor, Math.max(10, laser.scorePayload * 15));
-                            createFloatingText(laser.targetEnemyRef.x, laser.targetEnemyRef.y, `${laser.judgmentText} +${laser.scorePayload}`, laser.effectColor);
-                            
-                            enemies.splice(enemyIndex, 1); 
-                            score += laser.scorePayload; 
-                            
-                            triggerShake(laser.scorePayload === 2 ? 8 : (laser.scorePayload === 1 ? 4 : 1));
+                            let targetEnemy = enemies[enemyIndex];
+                            targetEnemy.hp -= 1;
+
+                            if (targetEnemy.hp <= 0) {
+                                // Node destroyed completely
+                                createExplosion(targetEnemy.x, targetEnemy.y, laser.effectColor, Math.max(12, laser.scorePayload * 15));
+                                createFloatingText(targetEnemy.x, targetEnemy.y, `${laser.judgmentText} +${laser.scorePayload}`, laser.effectColor);
+                                score += laser.scorePayload; 
+                                triggerShake(laser.scorePayload === 2 ? 8 : (laser.scorePayload === 1 ? 4 : 1));
+                                enemies.splice(enemyIndex, 1); 
+                            } else {
+                                // Tank hit but still alive
+                                targetEnemy.flashFrames = 5; // trigger temporary flash impact highlight
+                                createExplosion(targetEnemy.x, targetEnemy.y, '#ffffff', 6);
+                                createFloatingText(targetEnemy.x, targetEnemy.y, "ABSORBED", '#ffffff');
+                                triggerShake(2);
+                            }
                         }
                         lasers.splice(i, 1); 
                         continue;
@@ -367,9 +408,10 @@
                     let baseMoveX = Math.cos(enemy.angle) * enemy.speed;
                     let baseMoveY = Math.sin(enemy.angle) * enemy.speed;
 
-                    if (currentLevel === 2){
-                        let waveFrequency = frameCount * 0.08 + enemy.waveSeed;
-                        let waveMagnitude = 1.8; 
+                    // Level 2 handles specialized winding mechanics
+                    if (currentLevel === 2 || enemy.type === 'glitch'){
+                        let waveFrequency = frameCount * (enemy.type === 'glitch' ? 0.15 : 0.08) + enemy.waveSeed;
+                        let waveMagnitude = enemy.type === 'glitch' ? 2.5 : 1.8; 
                         
                         let perpendicularAngle = enemy.angle + Math.PI / 2;
                         let waveOffset = Math.sin(waveFrequency) * waveMagnitude;
@@ -380,6 +422,9 @@
                         enemy.x -= baseMoveX;
                         enemy.y -= baseMoveY;
                     }
+
+                    // decremented frame tracking ticks
+                    if (enemy.flashFrames > 0) enemy.flashFrames--;
 
                     let dx = enemy.x - player.x;
                     let dy = enemy.y - player.y;
@@ -460,11 +505,26 @@
             }
             canvasContext.shadowBlur = 0; 
 
-            canvasContext.fillStyle = '#ff3366'; 
+            // Drawing structural nodes with custom variations
             for (let enemy of enemies){
                 canvasContext.beginPath(); 
                 canvasContext.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2); 
+                
+                if (enemy.flashFrames > 0) {
+                    canvasContext.fillStyle = '#ffffff'; // White shield impact indicator frame
+                } else {
+                    canvasContext.fillStyle = enemy.color;
+                }
                 canvasContext.fill(); 
+
+                // Visual interior detailing indicator ring for multi-hit heavy quantum nodes
+                if (enemy.type === 'quantum' && enemy.hp === 2) {
+                    canvasContext.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                    canvasContext.lineWidth = 2;
+                    canvasContext.beginPath();
+                    canvasContext.arc(enemy.x, enemy.y, enemy.radius * 0.5, 0, Math.PI * 2);
+                    canvasContext.stroke();
+                }
             }
 
             for (let p of particles){
@@ -531,7 +591,7 @@
                 }else{
                     canvasContext.fillStyle = '#00f2fe'; 
                     canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif'; 
-                    canvasContext.fillText('PRESS "O" OR ANY KEY TO REBOOT ARCHITECTURE', canvas.width / 2, canvas.height / 2 + 35); 
+                    canvasContext.fillText('PRESS "O", SPACEBAR, OR ANY KEY TO REBOOT ARCHITECTURE', canvas.width / 2, canvas.height / 2 + 35); 
                 }
                 
                 canvasContext.textAlign = 'left'; 
@@ -546,39 +606,57 @@
                 
                 canvasContext.fillStyle = '#00f2fe';
                 canvasContext.font = '800 32px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('CHRONO SLASH // ARCHITECTURE', canvas.width / 2, canvas.height / 2 - 110);
+                canvasContext.fillText('CHRONO SLASH // ARCHITECTURE', canvas.width / 2, canvas.height / 2 - 120);
 
                 canvasContext.fillStyle = '#ffffff';
-                canvasContext.font = '600 15px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('DEFEND THE CHRONO-CORE FROM THE INCOMING VECTOR NODES', canvas.width / 2, canvas.height / 2 - 60);
+                canvasContext.font = '600 14px "Plus Jakarta Sans", sans-serif';
+                canvasContext.fillText('DEFEND THE CHRONO-CORE FROM THE INCOMING VECTOR ARCHETYPES', canvas.width / 2, canvas.height / 2 - 75);
 
+                // enemy dictionary reference panel
+                canvasContext.fillStyle = 'rgba(255, 255, 255, 0.04)';
+                canvasContext.strokeStyle = 'rgba(0, 242, 254, 0.15)';
+                canvasContext.lineWidth = 1;
+                canvasContext.fillRect(canvas.width / 2 - 320, canvas.height / 2 - 50, 640, 150);
+                canvasContext.strokeRect(canvas.width / 2 - 320, canvas.height / 2 - 50, 640, 150);
+
+                // FIX: Switched layout logic to left-alignment inside the block so text labels and descriptions never overlap regardless of resolution
+                canvasContext.textAlign = 'left';
+
+                // Entry 1: Standard
+                canvasContext.fillStyle = '#ff3366';
+                canvasContext.beginPath(); canvasContext.arc(canvas.width / 2 - 290, canvas.height / 2 - 20, 8, 0, Math.PI*2); canvasContext.fill();
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '800 13px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('VECTOR NODE', canvas.width / 2 - 270, canvas.height / 2 - 16);
                 canvasContext.fillStyle = '#646473';
-                canvasContext.fillRect(canvas.width / 2 - 250, canvas.height / 2 - 30, 500, 110);
+                canvasContext.font = '500 12px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('• Standard core vector threat matrix tracking.', canvas.width / 2 - 130, canvas.height / 2 - 16);
 
+                // Entry 2: Glitch
+                canvasContext.fillStyle = '#00f2fe';
+                canvasContext.beginPath(); canvasContext.arc(canvas.width / 2 - 290, canvas.height / 2 + 10, 6, 0, Math.PI*2); canvasContext.fill();
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '800 13px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('GLITCH NODE', canvas.width / 2 - 270, canvas.height / 2 + 14);
+                canvasContext.fillStyle = '#646473';
+                canvasContext.font = '500 12px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('• High speed system variance. Small target size.', canvas.width / 2 - 130, canvas.height / 2 + 14);
+
+                // Entry 3: Quantum
+                canvasContext.fillStyle = '#b533ff';
+                canvasContext.beginPath(); canvasContext.arc(canvas.width / 2 - 290, canvas.height / 2 + 40, 11, 0, Math.PI*2); canvasContext.fill();
+                canvasContext.fillStyle = '#ffffff';
+                canvasContext.font = '800 13px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('QUANTUM NODE', canvas.width / 2 - 270, canvas.height / 2 + 44);
+                canvasContext.fillStyle = '#646473';
+                canvasContext.font = '500 12px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('• Reinforced armor frame. Requires 2 impact slashes.', canvas.width / 2 - 130, canvas.height / 2 + 44);
+
+                // Reset back to center alignment for global overlay footers
+                canvasContext.textAlign = 'center';
+
+                // operational prompt keys instruction footer
                 canvasContext.fillStyle = '#ffd700'; 
                 canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('PERFECT SECTOR (+2 PTS)', canvas.width / 2 - 120, canvas.height / 2 + 0);
-                canvasContext.fillStyle = '#ffffff';
-                canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('• Outer Ring edge alignment', canvas.width / 2 + 80, canvas.height / 2 + 0);
-
-                canvasContext.fillStyle = '#00f2fe'; 
-                canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('GOOD SECTOR (+1 PT)', canvas.width / 2 - 120, canvas.height / 2 + 25);
-                canvasContext.fillStyle = '#ffffff';
-                canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('• Inside active weapon threshold', canvas.width / 2 + 80, canvas.height / 2 + 25);
-
-                canvasContext.fillStyle = '#ff3366'; 
-                canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('LATE SECTOR (0 PTS)', canvas.width / 2 - 120, canvas.height / 2 + 50);
-                canvasContext.fillStyle = '#ffffff';
-                canvasContext.font = '400 13px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('• Core adjacency warning zone', canvas.width / 2 + 80, canvas.height / 2 + 50);
+                canvasContext.fillText('PERFECT SECTOR = +2 PTS  ||  GOOD SECTOR = +1 PT', canvas.width / 2, canvas.height / 2 + 140);
 
                 canvasContext.fillStyle = '#00f2fe';
                 canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('PRESS "O" OR ANY OTHER KEY TO INITIALIZE SYSTEMS', canvas.width / 2, canvas.height / 2 + 125);
+                canvasContext.fillText('PRESS SPACEBAR OR THE "O" KEY TO INITIALIZE RUNTIME', canvas.width / 2, canvas.height / 2 + 180);
 
                 canvasContext.textAlign = 'left';
             }
