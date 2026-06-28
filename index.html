@@ -8,9 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
     <style>
+        /* global layout and layout styling */
         body {
             margin: 0;
-            background: #060609; 
+            background-color: #040406; 
             color: #fff;
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             display: flex;
@@ -20,11 +21,54 @@
             height: 100vh;
             overflow: hidden;
             letter-spacing: -0.2px; 
+            position: relative;
+        }
+
+        /* neon cyber grid background effect */
+        body::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(255, 51, 102, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 51, 102, 0.08) 1px, transparent 1px);
+            background-size: 60px 60px;
+            background-position: center;
+            transform: perspective(400px) rotateX(65deg);
+            animation: gridMove 12s linear infinite;
+            z-index: -2;
+        }
+
+        /* glowing ambient backing behind the canvas */
+        body::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, rgba(255, 51, 102, 0.04) 40%, transparent 70%);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 0 1000px;
+            }
         }
         
         .header-container {
             text-align: center;
             margin-bottom: 24px; 
+            z-index: 10;
         }
 
         h1 {
@@ -33,24 +77,25 @@
             font-weight: 800; 
             letter-spacing: -1px; 
             color: #fff; 
-            text-shadow: none; 
+            text-shadow: 0 0 20px rgba(0, 242, 254, 0.3); 
         }
 
         p {
             margin: 0;
             font-size: 0.9rem; 
-            color: #646473; 
+            color: #76768a; 
             font-weight: 600; 
             letter-spacing: 0px; 
         }
 
         canvas {
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            background: rgba(15, 15, 22, 0.6); 
-            backdrop-filter: blur(20px); 
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(0, 242, 254, 0.2); 
+            background: rgba(7, 7, 11, 0.93); 
+            backdrop-filter: blur(30px); 
+            -webkit-backdrop-filter: blur(30px);
+            box-shadow: 0 40px 90px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 51, 102, 0.1); 
             border-radius: 16px; 
+            z-index: 10;
         }
     </style>
 </head>
@@ -67,6 +112,7 @@
         const canvas = document.getElementById('gameCanvas');
         const canvasContext = canvas.getContext('2d');
 
+        // game settings and setup variables
         let score = 0; 
         let enemies = []; 
         let lasers = []; 
@@ -76,15 +122,17 @@
         let frameCount = 0; 
         let currentLevel = 1; 
 
+        // screen shake stuff
         let shakeIntensity = 0;
         let shakeDecay = 0.9; 
 
+        // keyboard input safety states
         let isKeyOLocked = false; 
-
         let gameState = "START"; 
         let gameOverTime = 0;             
         const restartCooldown = 2500;     
 
+        // player object settings
         const player = {
             x: canvas.width / 2, 
             y: canvas.height / 2, 
@@ -92,15 +140,17 @@
             strikeZone: 240 
         };
 
+        // listening for keyboard inputs
         window.addEventListener('keydown', function(event) {
             event.preventDefault(); 
             
+            // start the game if we are on the menu
             if (gameState === "START") {
                 gameState = "PLAYING";
                 return;
             }
 
-            // CHANGED FOR STEP 3: Check cooldown before resetting game state
+            // make sure players can't skip the game over lock window
             if (gameState === "GAMEOVER") {
                 const elapsed = Date.now() - gameOverTime;
                 if (elapsed >= restartCooldown) {
@@ -109,6 +159,7 @@
                 return; 
             }
             
+            // monitoring slash action trigger locks
             if (event.key === 'o' || event.key === 'O') {
                 if (isKeyOLocked) return;
                 
@@ -125,6 +176,7 @@
             }
         });
 
+        // custom particle creation for impacts
         function createExplosion(x, y, color, count) {
             for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2; 
@@ -142,6 +194,7 @@
             }
         }
 
+        // feedback text generator
         function createFloatingText(x, y, text, color) {
             floatingTexts.push({
                 x: x,
@@ -153,6 +206,7 @@
             });
         }
 
+        // rhythm combat and timing calculator loop
         function handleSlash() {
             if (enemies.length === 0) return; 
 
@@ -202,6 +256,7 @@
             }
         }
 
+        // logic to fetch new enemies around the core outskirts
         function spawnEnemy() {
             const angle = Math.random() * Math.PI * 2;
             const spawnDistance = Math.max(canvas.width, canvas.height) * 0.7;
@@ -220,6 +275,7 @@
             });
         }
 
+        // fresh data setup reset sequence
         function resetGame() {
             score = 0; 
             enemies = []; 
@@ -237,6 +293,7 @@
             shakeIntensity = intensity;
         }
 
+        // physics and entity update tick loop
         function update() {
             if (gameState === "PLAYING") { 
                 frameCount++; 
@@ -264,17 +321,17 @@
                     }
                 }
 
-                for (let i = floatingTexts.length - 1; i >= 0; i--) {
+                for (let i = floatingTexts.length - 1; i >= 0; i--){
                     let ft = floatingTexts[i];
                     ft.y -= ft.velocityUp;
                     ft.alpha -= 0.025; 
 
-                    if (ft.alpha <= 0) {
+                    if (ft.alpha <= 0){
                         floatingTexts.splice(i, 1);
                     }
                 }
 
-                for (let i = lasers.length - 1; i >= 0; i--) {
+                for (let i = lasers.length - 1; i >= 0; i--){
                     let laser = lasers[i];
                     
                     laser.x += Math.cos(laser.angle) * laser.speed;
@@ -284,7 +341,7 @@
                     let dy = laser.y - laser.targetEnemyRef.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
 
-                    if (dist <= laser.targetEnemyRef.radius + 10) {
+                    if (dist <= laser.targetEnemyRef.radius + 10){
                         let enemyIndex = enemies.indexOf(laser.targetEnemyRef);
                         if (enemyIndex !== -1) {
                             createExplosion(laser.targetEnemyRef.x, laser.targetEnemyRef.y, laser.effectColor, Math.max(10, laser.scorePayload * 15));
@@ -299,18 +356,18 @@
                         continue;
                     }
 
-                    if (laser.x < -100 || laser.x > canvas.width + 100 || laser.y < -100 || laser.y > canvas.height + 100) {
+                    if (laser.x < -100 || laser.x > canvas.width + 100 || laser.y < -100 || laser.y > canvas.height + 100){
                         lasers.splice(i, 1);
                     }
                 }
 
-                for (let i = enemies.length - 1; i >= 0; i--) {
+                for (let i = enemies.length - 1; i >= 0; i--){
                     let enemy = enemies[i];
                     
                     let baseMoveX = Math.cos(enemy.angle) * enemy.speed;
                     let baseMoveY = Math.sin(enemy.angle) * enemy.speed;
 
-                    if (currentLevel === 2) {
+                    if (currentLevel === 2){
                         let waveFrequency = frameCount * 0.08 + enemy.waveSeed;
                         let waveMagnitude = 1.8; 
                         
@@ -319,7 +376,7 @@
 
                         enemy.x -= baseMoveX + Math.cos(perpendicularAngle) * waveOffset;
                         enemy.y -= baseMoveY + Math.sin(perpendicularAngle) * waveOffset;
-                    } else {
+                    }else{
                         enemy.x -= baseMoveX;
                         enemy.y -= baseMoveY;
                     }
@@ -328,7 +385,7 @@
                     let dy = enemy.y - player.y;
                     let dist = Math.sqrt(dx * dx + dy * dy);
 
-                    if (dist <= player.radius) {
+                    if (dist <= player.radius){
                         gameState = "GAMEOVER";
                         gameOverTime = Date.now();
                         triggerShake(22);
@@ -336,9 +393,9 @@
                 }
             }
 
-            if (shakeIntensity > 0.1) {
+            if (shakeIntensity > 0.1){
                 shakeIntensity *= shakeDecay;
-            } else {
+            } else{
                 shakeIntensity = 0;
             }
 
@@ -346,10 +403,11 @@
             requestAnimationFrame(update); 
         }
 
-        function render() {
+        // master render system to draw pixels to frame
+        function render(){
             canvasContext.save(); 
 
-            if (shakeIntensity > 0) {
+            if (shakeIntensity > 0){
                 const dx = (Math.random() - 0.5) * shakeIntensity;
                 const dy = (Math.random() - 0.5) * shakeIntensity;
                 canvasContext.translate(dx, dy);
@@ -376,9 +434,9 @@
             canvasContext.stroke(); 
 
             let pulseScale = 0;
-            if (currentLevel === 2) {
+            if (currentLevel === 2){
                 pulseScale = Math.sin(frameCount * 0.2) * 5; 
-            } else {
+            }else{
                 pulseScale = Math.sin(frameCount * 0.05) * (3 * overdriveRatio); 
             }
             
@@ -392,7 +450,7 @@
 
             canvasContext.lineWidth = 5; 
             canvasContext.shadowBlur = 20; 
-            for (let laser of lasers) {
+            for (let laser of lasers){
                 canvasContext.strokeStyle = '#ffffff'; 
                 canvasContext.shadowColor = '#ffffff'; 
                 canvasContext.beginPath();
@@ -403,13 +461,13 @@
             canvasContext.shadowBlur = 0; 
 
             canvasContext.fillStyle = '#ff3366'; 
-            for (let enemy of enemies) {
+            for (let enemy of enemies){
                 canvasContext.beginPath(); 
                 canvasContext.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2); 
                 canvasContext.fill(); 
             }
 
-            for (let p of particles) {
+            for (let p of particles){
                 canvasContext.save(); 
                 canvasContext.globalAlpha = p.alpha; 
                 canvasContext.fillStyle = p.color;
@@ -421,7 +479,7 @@
 
             canvasContext.font = '800 13px "Plus Jakarta Sans", sans-serif';
             canvasContext.textAlign = 'center';
-            for (let ft of floatingTexts) {
+            for (let ft of floatingTexts){
                 canvasContext.save();
                 canvasContext.globalAlpha = ft.alpha;
                 canvasContext.fillStyle = ft.color;
@@ -438,8 +496,8 @@
             const levelText = currentLevel === 1 ? 'LEVEL 01 // STANDARD' : 'LEVEL 02 // OVERDRIVE'; 
             canvasContext.fillText(levelText, canvas.width - 240, 45); 
 
-            // CHANGED FOR STEP 3: Beautiful dedicated GameOver screen with visual timer calculation
-            if (gameState === "GAMEOVER") {
+            // overlay logic for game over breakdown screen
+            if (gameState === "GAMEOVER"){
                 canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
                 canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
                 
@@ -453,19 +511,16 @@
                 canvasContext.font = '600 16px "Plus Jakarta Sans", sans-serif'; 
                 canvasContext.fillText(`FINAL SECTOR RECORD: ${score.toString().padStart(3, '0')} NODES`, canvas.width / 2, canvas.height / 2 - 30); 
 
-                // Calculate ongoing lock time remaining
                 const timeElapsed = Date.now() - gameOverTime;
                 const timeRemaining = Math.max(0, restartCooldown - timeElapsed);
 
-                if (timeRemaining > 0) {
-                    // Lock active: Show loading bar and seconds countdown
+                if (timeRemaining > 0){
                     const secondsLeft = (timeRemaining / 1000).toFixed(1);
                     
                     canvasContext.fillStyle = '#646473';
                     canvasContext.font = '600 14px "Plus Jakarta Sans", sans-serif'; 
                     canvasContext.fillText(`RECALIBRATING CORE MATRIX... ${secondsLeft}s`, canvas.width / 2, canvas.height / 2 + 30); 
 
-                    // Minimal countdown tracking line
                     const barWidth = 200;
                     const progress = timeRemaining / restartCooldown;
                     canvasContext.fillStyle = 'rgba(255, 255, 255, 0.08)';
@@ -473,8 +528,7 @@
                     
                     canvasContext.fillStyle = '#ff3366';
                     canvasContext.fillRect(canvas.width / 2 - barWidth / 2, canvas.height / 2 + 50, barWidth * progress, 4);
-                } else {
-                    // Lock released: Flashing action text ready to reboot
+                }else{
                     canvasContext.fillStyle = '#00f2fe'; 
                     canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif'; 
                     canvasContext.fillText('PRESS "O" OR ANY KEY TO REBOOT ARCHITECTURE', canvas.width / 2, canvas.height / 2 + 35); 
@@ -483,7 +537,8 @@
                 canvasContext.textAlign = 'left'; 
             }
 
-            if (gameState === "START") {
+            // overlay logic for initial title screen instructions
+            if (gameState === "START"){
                 canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
                 canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
 
@@ -531,6 +586,7 @@
             canvasContext.restore(); 
         }
 
+        // initialize engine loop kickoff
         update(); 
     </script>
 </body>
