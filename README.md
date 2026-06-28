@@ -2,7 +2,7 @@
 
 A high-octane, minimalist cyberpunk arcade rhythm-slasher built entirely in a single file using vanilla JavaScript and HTML5 Canvas. Defend your core, adapt to changing vector patterns, and survive the system overload.
 
-** TRY IT FOR YOURSELF:** https://subtomic1833.github.io/Chrono-Slash/
+## TRY IT FOR YOURSELF: https://subtomic1833.github.io/Chrono-Slash/
 
 ---
 
