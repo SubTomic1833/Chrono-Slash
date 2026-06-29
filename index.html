@@ -103,7 +103,7 @@
 
     <div class="header-container">
         <h1>Chrono Slash</h1>
-        <p>Press SPACEBAR or the "O" KEY to slash when an enemy enters the circle</p> 
+        <p>Press the "O" KEY to slash when an enemy enters the circle</p> 
     </div>
     
     <canvas id="gameCanvas" width="1000" height="550"></canvas>
@@ -142,8 +142,8 @@
 
         // listening for keyboard inputs
         window.addEventListener('keydown', function(event) {
-            // Only intercept specific gameplay keys so browser shortcuts work perfectly
-            if (event.key === 'o' || event.key === 'O' || event.key === ' ') {
+            // ONLY intercept the O key so browser shortcuts work perfectly
+            if (event.key === 'o' || event.key === 'O') {
                 event.preventDefault(); 
             } else {
                 return; 
@@ -164,8 +164,8 @@
                 return; 
             }
             
-            // monitoring slash action trigger locks (Accepts 'O' or Spacebar)
-            if (event.key === 'o' || event.key === 'O' || event.key === ' ') {
+            // monitoring slash action trigger locks (Strictly 'O' or 'o')
+            if (event.key === 'o' || event.key === 'O') {
                 if (isKeyOLocked) return;
                 
                 if (gameState === "PLAYING") {
@@ -176,7 +176,7 @@
         });
 
         window.addEventListener('keyup', function(event) {
-            if (event.key === 'o' || event.key === 'O' || event.key === ' ') {
+            if (event.key === 'o' || event.key === 'O') {
                 isKeyOLocked = false; 
             }
         });
@@ -387,7 +387,7 @@
                                 enemies.splice(enemyIndex, 1); 
                             } else {
                                 // Tank hit but still alive
-                                targetEnemy.flashFrames = 5; // trigger temporary flash impact highlight
+                                targetEnemy.flashFrames = 5; 
                                 createExplosion(targetEnemy.x, targetEnemy.y, '#ffffff', 6);
                                 createFloatingText(targetEnemy.x, targetEnemy.y, "ABSORBED", '#ffffff');
                                 triggerShake(2);
@@ -408,7 +408,6 @@
                     let baseMoveX = Math.cos(enemy.angle) * enemy.speed;
                     let baseMoveY = Math.sin(enemy.angle) * enemy.speed;
 
-                    // Level 2 handles specialized winding mechanics
                     if (currentLevel === 2 || enemy.type === 'glitch'){
                         let waveFrequency = frameCount * (enemy.type === 'glitch' ? 0.15 : 0.08) + enemy.waveSeed;
                         let waveMagnitude = enemy.type === 'glitch' ? 2.5 : 1.8; 
@@ -423,7 +422,6 @@
                         enemy.y -= baseMoveY;
                     }
 
-                    // decremented frame tracking ticks
                     if (enemy.flashFrames > 0) enemy.flashFrames--;
 
                     let dx = enemy.x - player.x;
@@ -505,19 +503,17 @@
             }
             canvasContext.shadowBlur = 0; 
 
-            // Drawing structural nodes with custom variations
             for (let enemy of enemies){
                 canvasContext.beginPath(); 
                 canvasContext.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2); 
                 
                 if (enemy.flashFrames > 0) {
-                    canvasContext.fillStyle = '#ffffff'; // White shield impact indicator frame
+                    canvasContext.fillStyle = '#ffffff'; 
                 } else {
                     canvasContext.fillStyle = enemy.color;
                 }
                 canvasContext.fill(); 
 
-                // Visual interior detailing indicator ring for multi-hit heavy quantum nodes
                 if (enemy.type === 'quantum' && enemy.hp === 2) {
                     canvasContext.strokeStyle = 'rgba(255, 255, 255, 0.6)';
                     canvasContext.lineWidth = 2;
@@ -556,7 +552,6 @@
             const levelText = currentLevel === 1 ? 'LEVEL 01 // STANDARD' : 'LEVEL 02 // OVERDRIVE'; 
             canvasContext.fillText(levelText, canvas.width - 240, 45); 
 
-            // overlay logic for game over breakdown screen
             if (gameState === "GAMEOVER"){
                 canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
                 canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
@@ -591,13 +586,12 @@
                 }else{
                     canvasContext.fillStyle = '#00f2fe'; 
                     canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif'; 
-                    canvasContext.fillText('PRESS "O", SPACEBAR, OR ANY KEY TO REBOOT ARCHITECTURE', canvas.width / 2, canvas.height / 2 + 35); 
+                    canvasContext.fillText('PRESS THE "O" KEY TO REBOOT ARCHITECTURE', canvas.width / 2, canvas.height / 2 + 35); 
                 }
                 
                 canvasContext.textAlign = 'left'; 
             }
 
-            // overlay logic for initial title screen instructions
             if (gameState === "START"){
                 canvasContext.fillStyle = 'rgba(6, 6, 9, 0.95)'; 
                 canvasContext.fillRect(0, 0, canvas.width, canvas.height); 
@@ -612,14 +606,12 @@
                 canvasContext.font = '600 14px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('DEFEND THE CHRONO-CORE FROM THE INCOMING VECTOR ARCHETYPES', canvas.width / 2, canvas.height / 2 - 75);
 
-                // enemy dictionary reference panel
                 canvasContext.fillStyle = 'rgba(255, 255, 255, 0.04)';
                 canvasContext.strokeStyle = 'rgba(0, 242, 254, 0.15)';
                 canvasContext.lineWidth = 1;
                 canvasContext.fillRect(canvas.width / 2 - 320, canvas.height / 2 - 50, 640, 150);
                 canvasContext.strokeRect(canvas.width / 2 - 320, canvas.height / 2 - 50, 640, 150);
 
-                // FIX: Switched layout logic to left-alignment inside the block so text labels and descriptions never overlap regardless of resolution
                 canvasContext.textAlign = 'left';
 
                 // Entry 1: Standard
@@ -646,17 +638,15 @@
                 canvasContext.fillStyle = '#646473';
                 canvasContext.font = '500 12px "Plus Jakarta Sans", sans-serif'; canvasContext.fillText('• Reinforced armor frame. Requires 2 impact slashes.', canvas.width / 2 - 130, canvas.height / 2 + 44);
 
-                // Reset back to center alignment for global overlay footers
                 canvasContext.textAlign = 'center';
 
-                // operational prompt keys instruction footer
                 canvasContext.fillStyle = '#ffd700'; 
                 canvasContext.font = '800 14px "Plus Jakarta Sans", sans-serif';
                 canvasContext.fillText('PERFECT SECTOR = +2 PTS  ||  GOOD SECTOR = +1 PT', canvas.width / 2, canvas.height / 2 + 140);
 
                 canvasContext.fillStyle = '#00f2fe';
                 canvasContext.font = '800 15px "Plus Jakarta Sans", sans-serif';
-                canvasContext.fillText('PRESS SPACEBAR OR THE "O" KEY TO INITIALIZE RUNTIME', canvas.width / 2, canvas.height / 2 + 180);
+                canvasContext.fillText('PRESS THE "O" KEY TO INITIALIZE RUNTIME', canvas.width / 2, canvas.height / 2 + 180);
 
                 canvasContext.textAlign = 'left';
             }
